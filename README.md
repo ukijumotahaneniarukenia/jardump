@@ -17,7 +17,7 @@ tar xvf jardump-1.0-SNAPSHOT-bin.tar.gz
 
 or
 
-tar xvf jardump-1.0-SNAPSHOT-bin.tar.bz2
+bunzip2 jardump-1.0-SNAPSHOT-bin.tar.bz2
 ```
 
 # インストール
