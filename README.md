@@ -26,7 +26,9 @@ tar xvf jardump-1.0-SNAPSHOT-bin.tar.bz2
 cat <<EOS >>~/.bashrc
 function jardump() {
   JAVA_CMD=$(which java)
-  echo $JAVA_CMD -cp \"$(find $(pwd) -name jardump-1.0-SNAPSHOT.jar):$@\" app/App "$@" | bash
+  CLASS_PATH=$(find $HOME/.m2 -name "*jar"|xargs|tr ' ' ':')
+  TGT_JAR_CLASS_PATH="$(echo "$@" | tr ' ' ':')"
+  echo $JAVA_CMD -cp \"$(find $(pwd) -name jardump-1.0-SNAPSHOT.jar):$CLASS_PATH:$TGT_JAR_CLASS_PATH\" app/App "$@" | bash
 }
 EOS
 source ~/.bashrc
@@ -44,6 +46,11 @@ jardump /home/kuraine/.m2/repository/commons-lang/commons-lang/2.4/commons-lang-
   - 単一jarファイルのみ指定可能。複数jarファイルは単一を繰り返す。
 ```
 $jardump /home/kuraine/.m2/repository/commons-lang/commons-lang/2.4/commons-lang-2.4.jar
+```
+
+  - 複数jarファイルも対応できるようにalias functionを修正
+```
+$jardump /home/kuraine/.m2/repository/commons-lang/commons-lang/2.4/commons-lang-2.4.jar /home/kuraine/.m2/repository/junit/junit/3.8.1/junit-3.8.1.jar
 ```
 
 # OUT
