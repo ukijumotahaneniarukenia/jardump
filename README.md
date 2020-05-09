@@ -22,6 +22,8 @@ bunzip2 jardump-1.0-SNAPSHOT-bin.tar.bz2
 
 # インストール
 
+maven
+
 ```
 cat <<EOS >>~/.bashrc
 function jardump() {
@@ -33,6 +35,18 @@ function jardump() {
 EOS
 source ~/.bashrc
 ```
+
+gradle
+
+```
+function jardump() {
+  JAVA_CMD=/usr/local/src/jdk-11/bin/java
+  CLASS_PATH=$(find $HOME/.gradle/caches/modules-2/files-2.1 -name "*jar"|xargs|tr ' ' ':')
+  TGT_JAR_CLASS_PATH="$(echo "$@" | tr ' ' ':')"
+  echo $JAVA_CMD -cp \"/usr/local/src/jardump-1.0-SNAPSHOT/jardump-1.0-SNAPSHOT.jar:$CLASS_PATH:\" app/App "$@" | bash
+}
+```
+
 
 # ヘルプ
 ```
