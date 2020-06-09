@@ -9,27 +9,26 @@ script-sketch/java/00059-java-特定のジャーに含まれる定数メソッ�
 [jardump](https://github.com/ukijumotahaneniarukenia/jardump/releases)
 
 ```
-unizp jardump-1.0-SNAPSHOT-bin.zip
+unizp jardump-2-0-0-SNAPSHOT-bin.zip
 
 or
 
-tar xvf jardump-1.0-SNAPSHOT-bin.tar.gz
+tar xvf jardump-2-0-0-SNAPSHOT-bin.tar.gz
 
 or
 
-bunzip2 jardump-1.0-SNAPSHOT-bin.tar.bz2
+bunzip2 jardump-2-0-0-SNAPSHOT-bin.tar.bz2
 ```
 
 # 実行
 
 ```
 #jarファイル未指定（mavenのデフォルトのレポジトリ配下すべてのjarファイルが対象）
-time java -jar jardump-1.0-SNAPSHOT/jardump-1.0-SNAPSHOT.jar
+time java -jar jardump-2-0-0-SNAPSHOT/jardump-2-0-0-SNAPSHOT.jar
 
 #単一jarファイル指定
-time java -jar jardump-1.0-SNAPSHOT/jardump-1.0-SNAPSHOT.jar /home/kuraine/.m2/repository/commons-lang/commons-lang/2.4/commons-lang-2.4.jar
-
+time java -jar jardump-2-0-0-SNAPSHOT/jardump-2-0-0-SNAPSHOT.jar /home/kuraine/.m2/repository/commons-lang/commons-lang/2.4/commons-lang-2.4.jar
 
 #複数jarファイル指定
-time java -jar jardump-1.0-SNAPSHOT/jardump-1.0-SNAPSHOT.jar /home/kuraine/.m2/repository/commons-lang/commons-lang/2.4/commons-lang-2.4.jar /home/kuraine/.m2/repository/org/ow2/asm/asm-tree/4.1/asm-tree-4.1.jar
+time java -jar jardump-2-0-0-SNAPSHOT/jardump-2-0-0-SNAPSHOT.jar /home/kuraine/.m2/repository/commons-lang/commons-lang/2.4/commons-lang-2.4.jar /home/kuraine/.m2/repository/org/ow2/asm/asm-tree/4.1/asm-tree-4.1.jar
 ```
