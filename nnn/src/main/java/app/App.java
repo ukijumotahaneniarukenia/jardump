@@ -90,16 +90,16 @@ public class App {
     private static List<List<String>> rearrange(List<List<String>> ll) {
         int row = ll.size();
         return IntStream.range(0, row).boxed().parallel().map(e -> Arrays.asList(
-                ll.get(e).get(0).replace(COL_NAME_SEPARATOR,R)
-                , ll.get(e).get(2)
-                , ll.get(e).get(3)
-                , ll.get(e).get(1) + COL_NAME_SEPARATOR + ll.get(e).get(4)
-                , ll.get(e).get(1) + COL_NAME_SEPARATOR + ll.get(e).get(4) + COL_NAME_SEPARATOR + ll.get(e).get(5)
-                , ll.get(e).get(6)
+                ll.get(e).get(0).replace(COL_NAME_SEPARATOR,R) // /home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar
+                , ll.get(e).get(2) // 00000001
+                , ll.get(e).get(3) // 0001
+                , ll.get(e).get(1) + COL_NAME_SEPARATOR + ll.get(e).get(4) // MMMMM-00
+                , ll.get(e).get(1) + COL_NAME_SEPARATOR + ll.get(e).get(4) + COL_NAME_SEPARATOR + ll.get(e).get(5) // MMMMM-00-クラス名
+                , ll.get(e).get(6) // org.jsoup.Connection$Request
         )).collect(Collectors.toList());
     }
     private static void crossTablation(CrossTab crossTab,List<List<String>> rearrangeList){
-        crossTab(rearrangeList,4,6,crossTab);
+        crossTable(rearrangeList,4,6,crossTab);
     }
     private static void outputHeadRecord(CrossTab crossTab){
         Stream.of(crossTab.getTblHead()).forEach(e-> System.out.println(e));
@@ -120,30 +120,110 @@ public class App {
     private static <E> List<E> flattenList(Collection<E>... liz){
         return Arrays.stream(liz).flatMap(e -> e.stream()).collect(Collectors.toList());
     }
-    private static CrossTab crossTab(List<List<String>> ll,Integer endGrpColIdx,Integer grpColIdx,CrossTab crossTab){
+
+    private static Map<String, Set<String>> crossTableCreateTableHeadPreProcess(List<List<String>> ll,Integer endGrpColIdx){
         int row = ll.size();
-
-        //表頭
-        Map<String, Set<String>> ms = IntStream.range(0,row).boxed().collect(Collectors.groupingBy(i->ll.get(i).get(endGrpColIdx-1)
+        return IntStream.range(0,row).boxed().collect(Collectors.groupingBy(i->ll.get(i).get(endGrpColIdx-1)
                 ,Collectors.mapping(i->ll.get(i).get(endGrpColIdx),Collectors.toSet())));
+    }
 
+    private static Map<String, Map<String,String>> crossTableCreateTableHeadPostProcess(List<List<String>> ll,Integer endGrpColIdx){
+        int row = ll.size();
+        return null;
+    }
+
+    /**
+    *<pre>
+    *INPUT:
+    *       ARG1:２次元リスト
+    *       ARG2:グループ化項目列の最終列インデックス番号
+    *       ARG3:グループ化対象列のインデックス番号
+    *<pre/>
+    *<pre>
+    *CMD:
+    *       次のプロセスでグルーピングできるようにキーとバリューにグループ化項目列の最終列をともに持たせるようなデータ構造に変換
+    *       バリューの方でエントリ索引できるようにマップにしておく
+    *<pre/>
+    *<pre>
+    *OUTPUT:
+    *       グループ化項目列の最終列をキーに持ち、バリューに以下（※１）のマップを持つマップを返却
+    *       ※１ グループ化項目列の最終列をキーに持ち、グループ化対象列をバリューに持つマップ
+    *<pre/>
+    *<pre>
+    *EXCEPTION:
+    *       NONE
+    *<pre/>
+    * */
+    private static Map<String, Map<String,String>> crossTableCreateTableSidePreProcess(List<List<String>> ll,Integer endGrpColIdx,Integer grpColIdx){
+        int row = ll.size();
+        return IntStream.range(0,row).boxed()
+                // /home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0001-MMMMM-09
+                .collect(Collectors.groupingBy(i->ll.get(i).subList(0,endGrpColIdx).stream().collect(Collectors.joining(COL_NAME_SEPARATOR))
+                        // { MMMMM-09 -> arg0}
+                        ,Collectors.groupingBy(i->ll.get(i).get(endGrpColIdx-1),Collectors.mapping(i->ll.get(i).get(grpColIdx-1),Collectors.joining(COL_VALUE_SEPARATOR)))));
+    }
+
+    /**
+     *<pre>
+     *INPUT:
+     *      ARG1:
+     *              グループ化項目列の最終列をキーに持ち、バリューに以下（※１）のマップを持つマップを返却
+     *              ※１グループ化項目列の最終列をキーに持ち、グループ化対象列をバリューに持つマップ
+     *      ARG2:グループ化項目列の最終列インデックス番号
+     *      ARG3:グループ化対象列のインデックス番号
+     *<pre/>
+     *<pre>
+     *CMD:
+     *      キー側ではグループ化項目列のうち最終列を除いた項目列をキーに変換
+     *      バリュー側ではグループ化対象列をカラムセパレータで集約化
+     *<pre/>
+     *<pre>
+     *OUTPUT:
+     *      グループ化項目列のうち最終列を除いた項目列をキーに持ち、グループ化対象列をカラムセパレータで集約化した値をバリューに持つマップ
+     *<pre/>
+     *<pre>
+     *EXCEPTION:
+     *       NONE
+     *<pre/>
+     * */
+    private static Map<String,String> crossTableCreateTableSideMidProcess(Map<String, Map<String,String>> preBody,Integer endGrpColIdx) {
+        return preBody.entrySet().stream().sorted(Comparator.comparing(e->e.getKey()))
+                .collect(Collectors.groupingBy(e->Arrays.asList(e.getKey().split(COL_NAME_SEPARATOR)).subList(0,endGrpColIdx-1).stream().collect(Collectors.joining(COL_NAME_SEPARATOR)) // /home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0001-MMMMM-06 --> /home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0001
+                        ,Collectors.mapping(e->e.getValue().values().stream().limit(1).collect(Collectors.joining())
+                                ,Collectors.joining(COL_SEPARATOR))));
+    }
+
+
+
+    private static CrossTab crossTable(List<List<String>> ll,Integer endGrpColIdx,Integer grpColIdx,CrossTab crossTab){
+
+        Map<String, Set<String>> ms = crossTableCreateTableHeadPreProcess(ll,endGrpColIdx);
+
+        //行番号	MMMMM-00-クラス名	MMMMM-01-アクセス修飾子	MMMMM-02-戻り値の型	MMMMM-03-メソッド名	MMMMM-04-可変長引数があるか	MMMMM-05-引数の個数	MMMMM-06-型パラメータリスト	MMMMM-07-型パラメータ記号リスト	MMMMM-08-引数の型リスト	MMMMM-09-仮引数の変数名リスト
         String tblHead = A1+COL_SEPARATOR+ms.entrySet().stream()
                 .flatMap(e->e.getValue().stream())
-                .sorted(Comparator.comparing(e->Arrays.asList(e.split(COL_NAME_SEPARATOR)).subList(0,endGrpColIdx-1).stream().collect(Collectors.joining())))
+                .sorted(Comparator.comparing(e->Arrays.asList(e.split(COL_NAME_SEPARATOR)).subList(0,endGrpColIdx-2).stream().collect(Collectors.joining())))
                 .collect(Collectors.joining(COL_SEPARATOR));
 
         //表側
         //PreProcess
-        Map<String, Map<String,String>> preBody = IntStream.range(0,row).boxed()
-                .collect(Collectors.groupingBy(i->ll.get(i).subList(0,endGrpColIdx).stream().collect(Collectors.joining(COL_NAME_SEPARATOR))
-                        ,Collectors.groupingBy(i->ll.get(i).get(endGrpColIdx-1)
-                                ,Collectors.mapping(i->ll.get(i).get(grpColIdx-1),Collectors.joining(COL_VALUE_SEPARATOR)))));
+        // key --> /home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0001-MMMMM-09 ,value -->{ MMMMM-09 -> arg0}
+
+        Map<String, Map<String,String>> preBody = crossTableCreateTableSidePreProcess(ll,endGrpColIdx,grpColIdx);
 
         //MidProcess
-        Map<String,String> midBody = preBody.entrySet().stream().sorted(Comparator.comparing(e->e.getKey()))
-                .collect(Collectors.groupingBy(e->Arrays.asList(e.getKey().split(COL_NAME_SEPARATOR)).subList(0,endGrpColIdx-1).stream().collect(Collectors.joining(COL_NAME_SEPARATOR))
-                        ,Collectors.mapping(e->e.getValue().values().stream().limit(1).collect(Collectors.joining())
-                                ,Collectors.joining(COL_SEPARATOR))));
+//        "/home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0021" -> "org.jsoup.Connection$Request\tpublic abstract\tjava.lang.String\tcookie\tfalse\t1\t\t\tjava.lang.String\targ0"
+//        "/home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0020" -> "org.jsoup.Connection$Request\tpublic abstract\tT\tcookie\tfalse\t2\t\t\tjava.lang.String,java.lang.String\targ0,arg1"
+//        "/home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0023" -> "org.jsoup.Connection$Request\tpublic abstract\tT\tmethod\tfalse\t1\t\t\torg.jsoup.Connection$Method\targ0"
+//        "/home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0001" -> "org.jsoup.Connection$Request\tpublic abstract\torg.jsoup.Connection$Request\ttimeout\tfalse\t1\t\t\tint\targ0"
+//        "/home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0022" -> "org.jsoup.Connection$Request\tpublic abstract\torg.jsoup.Connection$Method\tmethod\tfalse\t0\t\t\t\t"
+//        Map<String,String> midBody = preBody.entrySet().stream().sorted(Comparator.comparing(e->e.getKey()))
+//                .collect(Collectors.groupingBy(e->Arrays.asList(e.getKey().split(COL_NAME_SEPARATOR)).subList(0,endGrpColIdx-1).stream().collect(Collectors.joining(COL_NAME_SEPARATOR)) // /home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0001-MMMMM-06 --> /home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0001
+//                        ,Collectors.mapping(e->e.getValue().values().stream().limit(1).collect(Collectors.joining())
+//                                ,Collectors.joining(COL_SEPARATOR))));
+
+
+        Map<String,String> midBody = crossTableCreateTableSideMidProcess(preBody,endGrpColIdx);
 
         Integer mx = tblHead.length()-tblHead.replace(COL_SEPARATOR,"").length()+1;
 
@@ -256,15 +336,16 @@ public class App {
         }
     }
     public static void main(String... args) throws IOException {
-        String defaultBaseDir = "/home/kuraine/.m2/repository/";
+//        String defaultBaseDir = "/home/kuraine/.m2/repository/";
 
-        Set<File> jarFileList = new LinkedHashSet<>();
+//        Set<File> jarFileList = new LinkedHashSet<>();
+        Set<File> jarFileList = new LinkedHashSet(){{add(new File("/home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup-1.10.2.jar"));}};
 
-        if(args.length>0){
-            jarFileList.addAll(Arrays.asList(args).stream().map(jarFileName->new File(jarFileName)).collect(Collectors.toList()));
-        }else{
-            jarFileList = getJarFileList(new File(defaultBaseDir));
-        }
+//        if(args.length>0){
+//            jarFileList.addAll(Arrays.asList(args).stream().map(jarFileName->new File(jarFileName)).collect(Collectors.toList()));
+//        }else{
+//            jarFileList = getJarFileList(new File(defaultBaseDir));
+//        }
 
         ClassLoader classLoader = newClassLoader(jarFileList);
 
@@ -283,9 +364,6 @@ public class App {
         Map<String,List<String>> classLoadSkipResult = new LinkedHashMap<>();
         Map<String,List<String>> classExecuteDoneResult = new LinkedHashMap<>();
         Map<String,List<String>> classExecuteSkipResult = new LinkedHashMap<>();
-
-        Map<String,Set<String>> classLoadSkipResultOnlyLoad = new TreeMap<>();
-        Map<String,Set<String>> classExecuteSkipResultOnlyExecute = new TreeMap<>();
 
         for (File f : jarFileList) {
 
@@ -358,24 +436,5 @@ public class App {
                 ,"jarFileClassExecuteDoneCnt",classExecuteList.size()
                 ,"jarFileClassExecuteSkipCnt",classExecuteSkipList.size()
         );
-
-        //クラスロード時にコケるクラスと実行時にコケるクラスの分類
-
-//        for(Map.Entry<String,List<String>> entry : classLoadSkipResult.entrySet()){
-//            classLoadSkipResultOnlyLoad.put(entry.getKey(),entry.getValue().stream().collect(Collectors.toSet()));
-//        }
-//
-//        for(Map.Entry<String,List<String>> entry : classExecuteSkipResult.entrySet()){
-//            classExecuteSkipResultOnlyExecute.put(entry.getKey(),entry.getValue().stream().collect(Collectors.toSet()));
-//        }
-//
-//        System.out.printf(
-//                "%s\t%s\n" +
-//                        "\n" +
-//                        "%s\t%s\n" +
-//                        "\n"
-//                ,"classLoadSkipResultOnlyLoad",classLoadSkipResultOnlyLoad
-//                ,"classExecuteSkipResultOnlyExecute",classExecuteSkipResultOnlyExecute
-//        );
     }
 }
