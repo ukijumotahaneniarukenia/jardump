@@ -90,16 +90,16 @@ public class App {
     private static List<List<String>> rearrange(List<List<String>> ll) {
         int row = ll.size();
         return IntStream.range(0, row).boxed().parallel().map(e -> Arrays.asList(
-                ll.get(e).get(0).replace(COL_NAME_SEPARATOR,R)
-                , ll.get(e).get(2)
-                , ll.get(e).get(3)
-                , ll.get(e).get(1) + COL_NAME_SEPARATOR + ll.get(e).get(4)
-                , ll.get(e).get(1) + COL_NAME_SEPARATOR + ll.get(e).get(4) + COL_NAME_SEPARATOR + ll.get(e).get(5)
-                , ll.get(e).get(6)
+                ll.get(e).get(0).replace(COL_NAME_SEPARATOR,R) // /home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar
+                , ll.get(e).get(2) // 00000001
+                , ll.get(e).get(3) // 0001
+                , ll.get(e).get(1) + COL_NAME_SEPARATOR + ll.get(e).get(4) // MMMMM-00
+                , ll.get(e).get(1) + COL_NAME_SEPARATOR + ll.get(e).get(4) + COL_NAME_SEPARATOR + ll.get(e).get(5) // MMMMM-00-クラス名
+                , ll.get(e).get(6) // org.jsoup.Connection$Request
         )).collect(Collectors.toList());
     }
-    private static void crossTablation(CrossTab crossTab,List<List<String>> rearrangeList){
-        crossTab(rearrangeList,4,6,crossTab);
+    private static void crossTabulation(CrossTab crossTab, List<List<String>> rearrangeList){
+        crossTable(rearrangeList,4,6,crossTab);
     }
     private static void outputHeadRecord(CrossTab crossTab){
         Stream.of(crossTab.getTblHead()).forEach(e-> System.out.println(e));
@@ -120,42 +120,121 @@ public class App {
     private static <E> List<E> flattenList(Collection<E>... liz){
         return Arrays.stream(liz).flatMap(e -> e.stream()).collect(Collectors.toList());
     }
-    private static CrossTab crossTab(List<List<String>> ll,Integer endGrpColIdx,Integer grpColIdx,CrossTab crossTab){
+
+    private static Map<String, Set<String>> crossTableCreateTableHeadPreProcess(List<List<String>> ll,Integer endGrpColIdx){
         int row = ll.size();
-
-        //表頭
-        Map<String, Set<String>> ms = IntStream.range(0,row).boxed().collect(Collectors.groupingBy(i->ll.get(i).get(endGrpColIdx-1)
+        return IntStream.range(0,row).boxed().collect(Collectors.groupingBy(i->ll.get(i).get(endGrpColIdx-1)
                 ,Collectors.mapping(i->ll.get(i).get(endGrpColIdx),Collectors.toSet())));
+    }
 
-        String tblHead = A1+COL_SEPARATOR+ms.entrySet().stream()
+    private static String crossTableCreateTableHeadPostProcess(Map<String, Set<String>> ms,Integer endGrpColIdx){
+        return A1+COL_SEPARATOR+ms.entrySet().stream()
                 .flatMap(e->e.getValue().stream())
-                .sorted(Comparator.comparing(e->Arrays.asList(e.split(COL_NAME_SEPARATOR)).subList(0,endGrpColIdx-1).stream().collect(Collectors.joining())))
+                //項目名を指定した順序で並べる
+                .sorted(Comparator.comparing(e->Arrays.asList(e.split(COL_NAME_SEPARATOR)).subList(0,endGrpColIdx-2).stream().collect(Collectors.joining())))
                 .collect(Collectors.joining(COL_SEPARATOR));
+    }
 
-        //表側
-        //PreProcess
-        Map<String, Map<String,String>> preBody = IntStream.range(0,row).boxed()
+    /**
+    *<pre>
+    *INPUT:
+    *       ARG1:２次元リスト
+    *       ARG2:グループ化項目列の最終列インデックス番号
+    *       ARG3:グループ化対象列のインデックス番号
+    *<pre/>
+    *<pre>
+    *CMD:
+    *       次のプロセスでグルーピングできるようにキーとバリューにグループ化項目列の最終列をともに持たせるようなデータ構造に変換
+    *       バリューの方でエントリ索引できるようにマップにしておく
+    *<pre/>
+    *<pre>
+    *OUTPUT:
+    *       グループ化項目列の最終列をキーに持ち、バリューに以下（※１）のマップを持つマップを返却
+    *       ※１ グループ化項目列の最終列をキーに持ち、グループ化対象列をバリューに持つマップ
+    *<pre/>
+    *<pre>
+    *EXCEPTION:
+    *       NONE
+    *<pre/>
+    * */
+    private static Map<String, Map<String,String>> crossTableCreateTableSidePreProcess(List<List<String>> ll,Integer endGrpColIdx,Integer grpColIdx){
+        int row = ll.size();
+        return IntStream.range(0,row).boxed()
                 .collect(Collectors.groupingBy(i->ll.get(i).subList(0,endGrpColIdx).stream().collect(Collectors.joining(COL_NAME_SEPARATOR))
-                        ,Collectors.groupingBy(i->ll.get(i).get(endGrpColIdx-1)
-                                ,Collectors.mapping(i->ll.get(i).get(grpColIdx-1),Collectors.joining(COL_VALUE_SEPARATOR)))));
+                        ,Collectors.groupingBy(i->ll.get(i).get(endGrpColIdx-1),Collectors.mapping(i->ll.get(i).get(grpColIdx-1),Collectors.joining(COL_VALUE_SEPARATOR)))));
+    }
 
-        //MidProcess
-        Map<String,String> midBody = preBody.entrySet().stream().sorted(Comparator.comparing(e->e.getKey()))
-                .collect(Collectors.groupingBy(e->Arrays.asList(e.getKey().split(COL_NAME_SEPARATOR)).subList(0,endGrpColIdx-1).stream().collect(Collectors.joining(COL_NAME_SEPARATOR))
+    /**
+     *<pre>
+     *INPUT:
+     *      ARG1:
+     *              グループ化項目列の最終列をキーに持ち、バリューに以下（※１）のマップを持つマップを返却
+     *              ※１グループ化項目列の最終列をキーに持ち、グループ化対象列をバリューに持つマップ
+     *      ARG2:グループ化項目列の最終列インデックス番号
+     *      ARG3:グループ化対象列のインデックス番号
+     *<pre/>
+     *<pre>
+     *CMD:
+     *      キー側ではグループ化項目列のうち最終列を除いた項目列をキーに変換
+     *      バリュー側ではグループ化対象列をカラムセパレータで集約化
+     *<pre/>
+     *<pre>
+     *OUTPUT:
+     *      グループ化項目列のうち最終列を除いた項目列をキーに持ち、グループ化対象列をカラムセパレータで集約化した値をバリューに持つマップ
+     *<pre/>
+     *<pre>
+     *EXCEPTION:
+     *       NONE
+     *<pre/>
+     * */
+    private static Map<String,String> crossTableCreateTableSideMidProcess(Map<String, Map<String,String>> preBody,Integer endGrpColIdx) {
+        return preBody.entrySet().stream().sorted(Comparator.comparing(e->e.getKey()))
+                .collect(Collectors.groupingBy(e->Arrays.asList(e.getKey().split(COL_NAME_SEPARATOR)).subList(0,endGrpColIdx-1).stream().collect(Collectors.joining(COL_NAME_SEPARATOR)) // /home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0001-MMMMM-06 --> /home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup###1.10.2.jar-00000001-0001
                         ,Collectors.mapping(e->e.getValue().values().stream().limit(1).collect(Collectors.joining())
                                 ,Collectors.joining(COL_SEPARATOR))));
+    }
 
-        Integer mx = tblHead.length()-tblHead.replace(COL_SEPARATOR,"").length()+1;
-
-        //PostProcess
-        //定数の場合とメソッドの場合で取得できる列数が異なるので、列数の多い方に寄せている
-        Map<String,String> tblBody = midBody.entrySet().stream()
+    /**
+     *<pre>
+     *INPUT:
+     *      ARG1:グループ化項目列のうち最終列を除いた項目列をキーに持ち、グループ化対象列をカラムセパレータで集約化した値をバリューに持つマップ
+     *      ARG2:定数での列数とメソッドでの列数のうち列数が多い方
+     *<pre/>
+     *<pre>
+     *CMD:
+     *      定数の場合とメソッドの場合で取得できる列数が異なるので、列数の多い方に寄せて、タブ数調節
+     *<pre/>
+     *<pre>
+     *OUTPUT:
+     *      グループ化項目列のうち最終列を除いた項目列をキーに持ち、グループ化対象列をカラムセパレータで集約化した値をバリューに持つマップ
+     *<pre/>
+     *<pre>
+     *EXCEPTION:
+     *       NONE
+     *<pre/>
+     * */
+    private static Map<String,String> crossTableCreateTableSidePostProcess(Map<String,String> midBody,Integer mx) {
+        return midBody.entrySet().stream()
                 .collect(Collectors.toMap(e->e.getKey()
                         ,e->(e.getValue().length()-e.getValue().replace(COL_SEPARATOR,"").length()+1)==METHOD_COL_NAME_LIST.size()?
                                 COL_SEPARATOR.repeat(mx-(e.getValue().length()-e.getValue().replace(COL_SEPARATOR,"").length()+1)-1)+e.getValue()
                                 :e.getValue()+COL_SEPARATOR.repeat(mx-(e.getValue().length()-e.getValue().replace(COL_SEPARATOR,"").length()+1)-1)));
+    }
 
-        //Set
+    private static CrossTab crossTable(List<List<String>> ll,Integer endGrpColIdx,Integer grpColIdx,CrossTab crossTab){
+
+        Map<String, Set<String>> ms = crossTableCreateTableHeadPreProcess(ll,endGrpColIdx);
+
+        String tblHead = crossTableCreateTableHeadPostProcess(ms,endGrpColIdx);
+
+        Integer mx = tblHead.length()-tblHead.replace(COL_SEPARATOR,"").length()+1;
+
+        Map<String, Map<String,String>> preBody = crossTableCreateTableSidePreProcess(ll,endGrpColIdx,grpColIdx);
+
+        Map<String,String> midBody = crossTableCreateTableSideMidProcess(preBody,endGrpColIdx);
+
+        Map<String,String> tblBody = crossTableCreateTableSidePostProcess(midBody,mx);
+
         crossTab.setTblHead(tblHead);
         crossTab.setTblBody(tblBody);
         return crossTab;
@@ -208,7 +287,7 @@ public class App {
             rt.put(entryClass.getValue()+F+METHOD_SIGN+F+String.format("%0"+CLASS_GRP_DIGIT+"d",grp)+F+String.format("%0"+CLASS_GRPSEQ_DIGIT+"d",cnt)
                     ,Arrays.asList(
                             entryMethod.getValue().getName()//クラス名
-                            , Modifier.toString(entryMethod.getKey().getModifiers())//アクセス修飾子
+                            ,Modifier.toString(entryMethod.getKey().getModifiers())//アクセス修飾子
                             ,entryMethod.getKey().getGenericReturnType().getTypeName()//戻り値の型
                             ,entryMethod.getKey().getName()//メソッド名
                             ,String.valueOf(entryMethod.getKey().isVarArgs())//可変長引数があるか
@@ -259,6 +338,7 @@ public class App {
         String defaultBaseDir = "/home/kuraine/.m2/repository/";
 
         Set<File> jarFileList = new LinkedHashSet<>();
+//        Set<File> jarFileList = new LinkedHashSet(){{add(new File("/home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup-1.10.2.jar"));}};
 
         if(args.length>0){
             jarFileList.addAll(Arrays.asList(args).stream().map(jarFileName->new File(jarFileName)).collect(Collectors.toList()));
@@ -283,9 +363,6 @@ public class App {
         Map<String,List<String>> classLoadSkipResult = new LinkedHashMap<>();
         Map<String,List<String>> classExecuteDoneResult = new LinkedHashMap<>();
         Map<String,List<String>> classExecuteSkipResult = new LinkedHashMap<>();
-
-        Map<String,Set<String>> classLoadSkipResultOnlyLoad = new TreeMap<>();
-        Map<String,Set<String>> classExecuteSkipResultOnlyExecute = new TreeMap<>();
 
         for (File f : jarFileList) {
 
@@ -326,7 +403,7 @@ public class App {
                 grp++;
                 classInfoList = getClassInfo(grp,loadClassJarFileNameMapList.get(i));
                 List<List<String>> rearrangeList = rearrange(classInfoList);
-                crossTablation(crossTab,rearrangeList);
+                crossTabulation(crossTab,rearrangeList);
                 if(i==0){
                     outputHeadRecord(crossTab);
                 }else{
@@ -358,24 +435,5 @@ public class App {
                 ,"jarFileClassExecuteDoneCnt",classExecuteList.size()
                 ,"jarFileClassExecuteSkipCnt",classExecuteSkipList.size()
         );
-
-        //クラスロード時にコケるクラスと実行時にコケるクラスの分類
-
-//        for(Map.Entry<String,List<String>> entry : classLoadSkipResult.entrySet()){
-//            classLoadSkipResultOnlyLoad.put(entry.getKey(),entry.getValue().stream().collect(Collectors.toSet()));
-//        }
-//
-//        for(Map.Entry<String,List<String>> entry : classExecuteSkipResult.entrySet()){
-//            classExecuteSkipResultOnlyExecute.put(entry.getKey(),entry.getValue().stream().collect(Collectors.toSet()));
-//        }
-//
-//        System.out.printf(
-//                "%s\t%s\n" +
-//                        "\n" +
-//                        "%s\t%s\n" +
-//                        "\n"
-//                ,"classLoadSkipResultOnlyLoad",classLoadSkipResultOnlyLoad
-//                ,"classExecuteSkipResultOnlyExecute",classExecuteSkipResultOnlyExecute
-//        );
     }
 }
