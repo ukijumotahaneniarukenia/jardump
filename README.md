@@ -11,13 +11,19 @@ curl -fsSLO https://github.com/ukijumotahaneniarukenia/jardump/releases/download
 
 # 実行
 
+各種ライブラリ管理ディレクトリ配下すべてのjarないしはコマンドライン引数に指定したjarファイルを対象にクラス定義情報をクロステーブル形式で標準出力に出力する
+
 ```
-#jarファイル未指定（mavenのデフォルトのレポジトリ配下すべてのjarファイルが対象）
-time java -jar jardump-3-0-0-SNAPSHOT.jar
-
-#単一jarファイル指定
-time java -jar jardump-3-0-0-SNAPSHOT.jar /home/kuraine/.m2/repository/commons-lang/commons-lang/2.4/commons-lang-2.4.jar
-
-#複数jarファイル指定
-time java -jar jardump-3-0-0-SNAPSHOT.jar /home/kuraine/.m2/repository/commons-lang/commons-lang/2.4/commons-lang-2.4.jar /home/kuraine/.m2/repository/org/ow2/asm/asm-tree/4.1/asm-tree-4.1.jar
+Usageだよーん
+java -jar jardump-4-0-0-SNAPSHOT.jar --maven
+or
+java -jar jardump-4-0-0-SNAPSHOT.jar --gradle
+or
+java -jar jardump-4-0-0-SNAPSHOT.jar --kotlin
+or
+java -jar jardump-4-0-0-SNAPSHOT.jar --scala
+or
+java -jar jardump-4-0-0-SNAPSHOT.jar /home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup-1.10.2.jar /home/kuraine/.sdkman/candidates/scala/current/lib/jline-3.14.1.jar
+or
+java -jar jardump-4-0-0-SNAPSHOT.jar /home/kuraine/.sdkman/candidates/kotlin/current/lib/kotlin-stdlib.jar /home/kuraine/.sdkman/candidates/scala/current/lib/scala-library.jar
 ```
