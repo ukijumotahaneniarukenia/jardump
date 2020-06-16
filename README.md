@@ -3,10 +3,10 @@ javalangのjarファイル内に存在するクラス定義情報をクロステ
 
 # ダウンロード
 
-[jardump](https://github.com/ukijumotahaneniarukenia/jardump/releases/tag/3-0-0)
+[jardump](https://github.com/ukijumotahaneniarukenia/jardump/releases)
 
 ```
-curl -fsSLO https://github.com/ukijumotahaneniarukenia/jardump/releases/download/3-0-0/jardump-3-0-0-SNAPSHOT.jar
+curl -fsSLO https://github.com/ukijumotahaneniarukenia/jardump/releases/download/4-0-0/jardump-4-0-0-SNAPSHOT.jar
 ```
 
 # 実行
