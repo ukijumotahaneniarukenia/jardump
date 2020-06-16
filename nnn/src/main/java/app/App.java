@@ -22,6 +22,8 @@ import static java.util.stream.Collectors.toList;
 
 public class App {
 
+    private static final String PROGRAM_VERSION = "4-0-0";
+
     private static Integer SEQ = 0;
     private static final String F = "---";
     private static final String R = "###";
@@ -33,6 +35,12 @@ public class App {
     private static final String CLASS_GRPSEQ_DIGIT = "4";
     private static final String SIGNATURE_GRP_DIGIT = "2";
     private static final String SIGNATURE_GRPSEQ_DIGIT = "2";
+
+    private static final String TARGET_EXTENSION = "jar";
+    private static final String INCLUDE_EXTENSION_PATTERN = ("(?i)^.*\\." + Pattern.quote(TARGET_EXTENSION) + "$"); //完全一致パタンを作成している
+    private static final String USER_HOME_DIR = System.getProperty("user.home");
+
+    private static String DEFAULT_BASE_DIR = USER_HOME_DIR + "/.m2/repository";
 
     private static final String A1 = "行番号";
     private static final String COL_NAME_SEPARATOR = "-";
@@ -311,15 +319,12 @@ public class App {
     }
     private static Set<File> getJarFileList(File dir) throws IOException {
         Path baseDir = Paths.get(dir.getAbsolutePath());
-        String targetExtension = "jar";
-
-        String includeExtensionPtn = ("(?i)^.*\\." + Pattern.quote(targetExtension) + "$"); //完全一致パタンを作成している
 
         return Files.walk(baseDir)
                 .parallel()
                 .map(e -> e.toFile())
                 .filter(e ->e.isFile())
-                .filter(e ->e.getAbsolutePath().matches(includeExtensionPtn))
+                .filter(e ->e.getAbsolutePath().matches(INCLUDE_EXTENSION_PATTERN))
                 .filter(e->!e.getAbsolutePath().contains("sources"))
                 .collect(Collectors.toSet());
     }
@@ -334,23 +339,66 @@ public class App {
             throw new RuntimeException(ex);
         }
     }
+    private static void Usage(){
+        System.out.println("Usageだよーん\n" +
+                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar --maven\n" +
+                "or\n" +
+                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar --gradle\n" +
+                "or\n" +
+                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar --kotlin\n" +
+                "or\n" +
+                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar --scala\n" +
+                "or\n" +
+                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar "+ USER_HOME_DIR +"/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup-1.10.2.jar " + USER_HOME_DIR + "/.sdkman/candidates/scala/current/lib/jline-3.14.1.jar\n" +
+                "or\n" +
+                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar "+ USER_HOME_DIR +"/.sdkman/candidates/kotlin/current/lib/kotlin-stdlib.jar " + USER_HOME_DIR + "/.sdkman/candidates/scala/current/lib/scala-library.jar\n" +
+                ""
+        );
+        System.exit(0);
+    }
     public static void main(String... args) throws IOException {
-        String defaultBaseDir = "/home/kuraine/.m2/repository/";
+
+        List<String> cmdLineArgs = Arrays.asList(args);
 
         Set<File> jarFileList = new LinkedHashSet<>();
-//        Set<File> jarFileList = new LinkedHashSet(){{add(new File("/home/kuraine/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup-1.10.2.jar"));}};
 
-        if(args.length>0){
-            jarFileList.addAll(Arrays.asList(args).stream().map(jarFileName->new File(jarFileName)).collect(Collectors.toList()));
+        if(0==cmdLineArgs.stream().filter(e->e.matches(INCLUDE_EXTENSION_PATTERN)).collect(Collectors.toSet()).size()){
+            //コマンドライン引数にjarファイルを１つも含まない場合
+            if(cmdLineArgs.size() != 1) {
+                //単一指定ディレクトリ以外ははじく
+                Usage();
+            }else{
+                switch (cmdLineArgs.get(0)){
+                    case "--gradle":
+                        DEFAULT_BASE_DIR = USER_HOME_DIR + "/.gradle/caches/modules-2/files-2.1";
+                        break;
+                    case "--maven":
+                        DEFAULT_BASE_DIR = USER_HOME_DIR + "/.m2/repository";
+                        break;
+                    case "--kotlin":
+                        DEFAULT_BASE_DIR = USER_HOME_DIR + "/.sdkman/candidates/kotlin/current/lib";
+                        break;
+                    case "--scala":
+                        DEFAULT_BASE_DIR = USER_HOME_DIR + "/.sdkman/candidates/scala/current/lib";
+                        break;
+                    default:
+                        Usage();
+                        break;
+                }
+            }
+
+            jarFileList = getJarFileList(new File(DEFAULT_BASE_DIR));
+
         }else{
-            jarFileList = getJarFileList(new File(defaultBaseDir));
+            //コマンドライン引数にjarファイルを１つ以上含む場合
+            jarFileList.addAll(cmdLineArgs.stream().filter(e->e.matches(INCLUDE_EXTENSION_PATTERN)).collect(Collectors.toSet())
+                                    .stream().map(jarFileName->new File(jarFileName)).collect(Collectors.toList()));
         }
 
         ClassLoader classLoader = newClassLoader(jarFileList);
 
         int jarFileListCnt = jarFileList.size();
         int jarFileClassCnt = 0;
-
 
         List<Map<Class<?>,String>> loadClassJarFileNameMapList = new LinkedList<>();
 
