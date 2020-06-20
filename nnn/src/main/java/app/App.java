@@ -231,9 +231,18 @@ public class App {
 
     private static CrossTab crossTable(List<List<String>> ll,Integer endGrpColIdx,Integer grpColIdx,CrossTab crossTab){
 
-        Map<String, Set<String>> ms = crossTableCreateTableHeadPreProcess(ll,endGrpColIdx);
-
-        String tblHead = crossTableCreateTableHeadPostProcess(ms,endGrpColIdx);
+        String tblHead = A1 + COL_SEPARATOR
+                + CONST_COL_NAME_LIST.entrySet().stream()
+                    .map(e->CONST_SIGN
+                            + COL_NAME_SEPARATOR + String.format("%0"+SIGNATURE_GRP_DIGIT+"d",e.getKey())
+                            + COL_NAME_SEPARATOR + e.getValue())
+                    .collect(Collectors.joining(COL_SEPARATOR))
+                + COL_SEPARATOR
+                + METHOD_COL_NAME_LIST.entrySet().stream()
+                    .map(e->METHOD_SIGN
+                        + COL_NAME_SEPARATOR + String.format("%0"+SIGNATURE_GRP_DIGIT+"d",e.getKey())
+                        + COL_NAME_SEPARATOR + e.getValue())
+                .collect(Collectors.joining(COL_SEPARATOR));
 
         Integer mx = tblHead.length()-tblHead.replace(COL_SEPARATOR,"").length()+1;
 
@@ -358,6 +367,8 @@ public class App {
     }
     public static void main(String... args) throws IOException {
 
+//        List<String> cmdLineArgs = Arrays.asList("/home/kuraine/.m2/repository/org/apache/commons/commons-math3/3.6.1/commons-math3-3.6.1.jar");
+//        List<String> cmdLineArgs = Arrays.asList("/home/kuraine/.m2/repository/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4.jar");
         List<String> cmdLineArgs = Arrays.asList(args);
 
         Set<File> jarFileList = new LinkedHashSet<>();
