@@ -242,6 +242,7 @@ public class App {
                         DEFAULT_BASE_DIR = USER_HOME_DIR + "/.sdkman/candidates/scala/current/lib";
                         break;
                     default:
+                        Usage();
                         break;
                 }
             }
@@ -290,7 +291,7 @@ public class App {
 
                         classLoadList.add(className);
 
-                    }catch (ClassNotFoundException | NoClassDefFoundError | VerifyError | IncompatibleClassChangeError | InternalError e){
+                    }catch (Throwable e){
                         //クラスパスロード時のハンドリング
                         classLoadSkipList.add(className);
                     }
@@ -349,7 +350,7 @@ public class App {
 
                 classExecuteList.addAll(classInfoList.stream().map(r->r.get(0)).collect(Collectors.toList()));
 
-            }catch (NoClassDefFoundError | VerifyError | IncompatibleClassChangeError | InternalError e){
+            }catch (Throwable e){
                 //実行時のハンドリング
                 classExecuteSkipList.addAll(classInfoList.stream().filter(r->r.contains("クラス名")).map(r->r.get(6)).collect(Collectors.toSet()));
             }
@@ -358,6 +359,7 @@ public class App {
         }
 
         System.err.printf(
+                "\n" +
                 "%s\t%s\n" +
                         "%s\t%s\n" +
                         "%s\t%s\n" +
@@ -371,6 +373,14 @@ public class App {
                 ,"jarFileClassLoadSkipCnt",classLoadSkipList.size()
                 ,"jarFileClassExecuteDoneCnt",classExecuteList.size()
                 ,"jarFileClassExecuteSkipCnt",classExecuteSkipList.size()
+        );
+
+        System.err.printf(
+                "%s\t%s\n" +
+                        "%s\t%s\n" +
+                        "\n"
+                ,"jarFileClassLoadSkipList",classLoadSkipList
+                ,"jarFileClassExecuteSkipList",classExecuteSkipList
         );
     }
 }
