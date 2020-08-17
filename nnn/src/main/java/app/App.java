@@ -39,7 +39,15 @@ public class App {
     private static final String INCLUDE_EXTENSION_PATTERN = ("(?i)^.*\\." + Pattern.quote(TARGET_EXTENSION) + "$"); //完全一致パタンを作成している
     private static final String USER_HOME_DIR = System.getProperty("user.home");
 
+    private static final String OPTION_ARGUMENTS_MAVEN = "--maven";
+    private static final String OPTION_ARGUMENTS_GRADLE = "--gradle";
+    private static final String OPTION_ARGUMENTS_KOTLIN = "--kotlin";
+    private static final String OPTION_ARGUMENTS_SCALA = "--scala";
     private static String DEFAULT_BASE_DIR = USER_HOME_DIR + "/.m2/repository";
+
+    private static final String OPTION_ARGUMENTS_CONSTANT = "--constant";
+    private static final String OPTION_ARGUMENTS_METHOD = "--method";
+    private static String DEFAULT_OUTPUT = OPTION_ARGUMENTS_CONSTANT;
 
     private static final String COLUMN_SEPARATOR = "\t";
 
@@ -180,44 +188,60 @@ public class App {
                 "or\n" +
                 "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar --scala\n" +
                 "or\n" +
-                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar "+ USER_HOME_DIR +"/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup-1.10.2.jar " + USER_HOME_DIR + "/.sdkman/candidates/scala/current/lib/jline-3.14.1.jar\n" +
+                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar --scala --method\n" +
                 "or\n" +
-                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar "+ USER_HOME_DIR +"/.sdkman/candidates/kotlin/current/lib/kotlin-stdlib.jar " + USER_HOME_DIR + "/.sdkman/candidates/scala/current/lib/scala-library.jar\n" +
+                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar --scala --constant\n" +
+                "or\n" +
+                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar "+ USER_HOME_DIR +"/.m2/repository/org/jsoup/jsoup/1.10.2/jsoup-1.10.2.jar " + USER_HOME_DIR + "/.m2/repository/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar\n" +
+                "or\n" +
+                "java -jar jardump-"+PROGRAM_VERSION+"-SNAPSHOT.jar "+ USER_HOME_DIR +"/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar\n" +
                 ""
         );
         System.exit(0);
     }
     public static void main(String... args) throws IOException {
 
-        List<String> cmdLineArgs = Arrays.asList("/home/aine/.m2/repository/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar");
-//        List<String> cmdLineArgs = Arrays.asList("/home/aine/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar");
-//        List<String> cmdLineArgs = Arrays.asList("/home/aine/.m2/repository/joda-time/joda-time/2.2/joda-time-2.2.jar");
-//        List<String> cmdLineArgs = Arrays.asList("/home/aine/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar","/home/aine/.m2/repository/joda-time/joda-time/2.2/joda-time-2.2.jar");
-//        List<String> cmdLineArgs = Arrays.asList(args);
+        List<String> cmdLineArgs = Arrays.asList(args);
+
+//        cmdLineArgs = Arrays.asList(
+//                USER_HOME_DIR +"/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar"
+//                ,USER_HOME_DIR + "/.m2/repository/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar"
+//                ,"--constant"
+//        );
 
         Set<File> jarFileList = new LinkedHashSet<>();
 
-        if(0==cmdLineArgs.stream().filter(e->e.matches(INCLUDE_EXTENSION_PATTERN)).collect(Collectors.toSet()).size()){
+        //出力情報の制御
+        for(String arg : cmdLineArgs){
+            switch (arg){
+                case OPTION_ARGUMENTS_CONSTANT:
+                    DEFAULT_OUTPUT = OPTION_ARGUMENTS_CONSTANT;
+                    break;
+                case OPTION_ARGUMENTS_METHOD:
+                    DEFAULT_OUTPUT = OPTION_ARGUMENTS_METHOD;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        if(0 == cmdLineArgs.stream().filter(e->e.matches(INCLUDE_EXTENSION_PATTERN)).collect(Collectors.toSet()).size()) {
             //コマンドライン引数にjarファイルを１つも含まない場合
-            if(cmdLineArgs.size() != 1) {
-                //単一指定ディレクトリ以外ははじく
-                Usage();
-            }else{
-                switch (cmdLineArgs.get(0)){
-                    case "--gradle":
+            for(String arg : cmdLineArgs){
+                switch (arg){
+                    case OPTION_ARGUMENTS_GRADLE:
                         DEFAULT_BASE_DIR = USER_HOME_DIR + "/.gradle/caches/modules-2/files-2.1";
                         break;
-                    case "--maven":
+                    case OPTION_ARGUMENTS_MAVEN :
                         DEFAULT_BASE_DIR = USER_HOME_DIR + "/.m2/repository";
                         break;
-                    case "--kotlin":
+                    case OPTION_ARGUMENTS_KOTLIN:
                         DEFAULT_BASE_DIR = USER_HOME_DIR + "/.sdkman/candidates/kotlin/current/lib";
                         break;
-                    case "--scala":
+                    case OPTION_ARGUMENTS_SCALA:
                         DEFAULT_BASE_DIR = USER_HOME_DIR + "/.sdkman/candidates/scala/current/lib";
                         break;
                     default:
-                        Usage();
                         break;
                 }
             }
@@ -227,7 +251,7 @@ public class App {
         }else{
             //コマンドライン引数にjarファイルを１つ以上含む場合
             jarFileList.addAll(cmdLineArgs.stream().filter(e->e.matches(INCLUDE_EXTENSION_PATTERN)).collect(Collectors.toSet())
-                                    .stream().map(jarFileName->new File(jarFileName)).collect(Collectors.toList()));
+                    .stream().map(jarFileName->new File(jarFileName)).collect(Collectors.toList()));
         }
 
         ClassLoader classLoader = newClassLoader(jarFileList);
@@ -282,9 +306,6 @@ public class App {
         List<List<String>> classConstantInfoList;
         List<List<String>> classMethodInfoList;
 
-        String option = "--constant";
-//        String option = "--method";
-
         for(int i=0;i<cnt;i++){
 
             try{
@@ -293,11 +314,11 @@ public class App {
 
                 if(i==0){
 
-                    if(option == "--constant"){
+                    if(DEFAULT_OUTPUT == OPTION_ARGUMENTS_CONSTANT){
 
                         System.out.println(OUTPUT_HEADER_CONSTANT_COLUMN_NAME_LIST.stream().collect(Collectors.joining(COLUMN_SEPARATOR)));
 
-                    }else if(option == "--method"){
+                    }else if(DEFAULT_OUTPUT == OPTION_ARGUMENTS_METHOD){
 
                         System.out.println(OUTPUT_HEADER_METHOD_COLUMN_NAME_LIST.stream().collect(Collectors.joining(COLUMN_SEPARATOR)));
 
@@ -310,12 +331,12 @@ public class App {
 
                 classInfoList = getClassInfo(grp,loadClassJarFileNameMapList.get(i));
 
-                if(option == "--constant"){
+                if(DEFAULT_OUTPUT == OPTION_ARGUMENTS_CONSTANT){
 
                     classConstantInfoList = classInfoList.stream().filter(e->e.size()==OUTPUT_HEADER_CONSTANT_COLUMN_NAME_LIST.size()).collect(toList());
                     classConstantInfoList.stream().forEach(e-> System.out.println(e.stream().collect(Collectors.joining(COLUMN_SEPARATOR))));
 
-                }else if(option == "--method"){
+                }else if(DEFAULT_OUTPUT == OPTION_ARGUMENTS_METHOD){
 
                     classMethodInfoList = classInfoList.stream().filter(e->e.size()==OUTPUT_HEADER_METHOD_COLUMN_NAME_LIST.size()).collect(toList());
                     classMethodInfoList.stream().forEach(e-> System.out.println(e.stream().collect(Collectors.joining(COLUMN_SEPARATOR))));
