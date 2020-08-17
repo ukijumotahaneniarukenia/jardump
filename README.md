@@ -36,3 +36,10 @@ or
 java -jar jardump-4-1-0-SNAPSHOT.jar /home/aine/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar
 
 ```
+
+
+番外編
+
+```
+java -jar jardump-4.1.0-SNAPSHOT-jar-with-dependencies.jar scala-xml_2.13-1.3.0.jar --method 2>/dev/null | awk -v FS="\t" '$7=="java.lang.String"&&$6=="public"{print $5,$6,$7,$8}' OFS="\t"
+```
