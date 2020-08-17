@@ -426,6 +426,6 @@ jsoup-1.13.1.jar -> java.xml
    org.jsoup.select                                   -> org.jsoup.parser                                   jsoup-1.13.1.jar
 ```
 
-このjardumpは依存関係の調査にも使えるのかもしれない
+よくわからんが、このjardumpは依存関係の調査にもいいかんじに使えるのかもしれない
 
 jdepsコマンド便利
