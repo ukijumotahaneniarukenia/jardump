@@ -78,21 +78,19 @@ public class App {
     private static final String ARGS_TYPE_LIST = "引数の型リスト";
     private static final String ARGS_TYPE_VARIABLE_NAME_LIST = "仮引数の変数名リスト";
 
-    private static final List<String> OUTPUT_HEADER_CONSTANT_COLUMN_NAME_LIST = new LinkedList(){{
+    private static final List<String> OUTPUT_HEADER_COMMON_COLUMN_NAME_LIST = new LinkedList(){{
         add(JARFILE_NAME);
         add(IS_CONSTANT_OR_METHOD_KEY_NAME);
         add(CLASS_NO);
         add(CLASS_SEQ_NO);
         add(CLASS_NAME);
+    }};
+    private static final List<String> OUTPUT_HEADER_CONSTANT_COLUMN_NAME_LIST = new LinkedList(){{
+        addAll(OUTPUT_HEADER_COMMON_COLUMN_NAME_LIST);
         add(CONSTANT_NAME);
     }};
-
     private static final List<String> OUTPUT_HEADER_METHOD_COLUMN_NAME_LIST = new LinkedList(){{
-        add(JARFILE_NAME);
-        add(IS_CONSTANT_OR_METHOD_KEY_NAME);
-        add(CLASS_NO);
-        add(CLASS_SEQ_NO);
-        add(CLASS_NAME);
+        addAll(OUTPUT_HEADER_COMMON_COLUMN_NAME_LIST);
         add(ACCESS_PRIVILEGE);
         add(RETURN_TYPE);
         add(METHOD_NAME);
@@ -443,15 +441,15 @@ public class App {
 
                     }
 
-                    classExecuteList.addAll(classInfoList.stream().collect(Collectors.groupingBy(list->list.get(4))).keySet());
+                    classExecuteList.addAll(classInfoList.stream().collect(Collectors.groupingBy(list->list.get(OUTPUT_HEADER_COMMON_COLUMN_NAME_LIST.indexOf(CLASS_NAME)))).keySet());
 
                     if(classExecuteDoneResult.containsKey(jarFile)){
 
-                        classExecuteDoneResult.get(jarFile).addAll(classInfoList.stream().collect(Collectors.groupingBy(list->list.get(4))).keySet());
+                        classExecuteDoneResult.get(jarFile).addAll(classInfoList.stream().collect(Collectors.groupingBy(list->list.get(OUTPUT_HEADER_COMMON_COLUMN_NAME_LIST.indexOf(CLASS_NAME)))).keySet());
 
                     }else{
 
-                        classExecuteDoneResult.put(jarFile, new ArrayList<>(classInfoList.stream().collect(Collectors.groupingBy(list -> list.get(4))).keySet()));
+                        classExecuteDoneResult.put(jarFile, new ArrayList<>(classInfoList.stream().collect(Collectors.groupingBy(list -> list.get(OUTPUT_HEADER_COMMON_COLUMN_NAME_LIST.indexOf(CLASS_NAME)))).keySet()));
 
                     }
 
