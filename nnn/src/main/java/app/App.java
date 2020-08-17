@@ -171,7 +171,7 @@ public class App {
                 .collect(Collectors.toSet());
     }
     private static URLClassLoader newClassLoader(Set<File> files) {
-        URL[]urls = files.stream().map(file->getURL(file)).collect(Collectors.toList()).toArray(new URL[files.size()]);
+        URL[] urls = files.stream().map(file->getURL(file)).collect(Collectors.toList()).toArray(new URL[files.size()]);
         return new URLClassLoader(urls, parent);
     }
     private static URL getURL(File file) {
@@ -205,55 +205,6 @@ public class App {
     public static void main(String... args) throws IOException {
 
         List<String> cmdLineArgs = Arrays.asList(args);
-
-//        // 複数件の件数チェック
-//        cmdLineArgs = Arrays.asList(
-//                USER_HOME_DIR +"/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar"
-//                ,USER_HOME_DIR + "/.m2/repository/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar"
-//                ,"--method"
-//        );
-//
-//        // 単一件の件数チェック
-//        cmdLineArgs = Arrays.asList(
-//                USER_HOME_DIR +"/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar"
-//                ,"--method"
-//        );
-//
-//        // 単一件の件数チェック
-//        cmdLineArgs = Arrays.asList(
-//                USER_HOME_DIR + "/.m2/repository/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar"
-//                ,"--method"
-//        );
-
-//        // 複数件の件数チェック
-//        cmdLineArgs = Arrays.asList(
-//                USER_HOME_DIR +"/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar"
-//                ,USER_HOME_DIR + "/.m2/repository/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar"
-//                ,"--constant"
-//        );
-
-//        // 単一件の件数チェック
-//        cmdLineArgs = Arrays.asList(
-//                USER_HOME_DIR +"/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar"
-//                ,"--constant"
-//        );
-
-//        // 単一件の件数チェック
-//        cmdLineArgs = Arrays.asList(
-//                USER_HOME_DIR + "/.m2/repository/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar"
-//                ,"--constant"
-//        );
-
-        // 異常系もりもりチェック
-        cmdLineArgs = Arrays.asList(
-                USER_HOME_DIR +"/scala-xml_2.13-1.3.0.jar"
-                ,"--method"
-        );
-
-//        cmdLineArgs = Arrays.asList(
-//                USER_HOME_DIR +"/scala-xml_2.13-1.3.0.jar"
-//                ,"--constant"
-//        );
 
         Set<File> jarFileList = new LinkedHashSet<>();
 
@@ -388,12 +339,12 @@ public class App {
         List<List<String>> classConstantInfoList;
         List<List<String>> classMethodInfoList;
 
+        int grp = 0;
+
         // 実行時はロードできたクラスファイル件数分で実施
         for(Map.Entry<String,List<Map<Class<?>,String>>> entry : classLoadedDoneCanExecuteClassListMap.entrySet()){
 
             String jarFile = entry.getKey();
-
-            int grp = 0;
 
             for(Map<Class<?>,String> classMetaInfo :entry.getValue()){
 
@@ -499,6 +450,30 @@ public class App {
                 ,"classLoadSkipList",classLoadSkipList
                 ,"classExecuteList",classExecuteList
                 ,"classExecuteSkipList",classExecuteSkipList
+        );
+
+        System.err.printf(
+                "%s\t%s\n" +
+                        "%s\t%s\n" +
+                        "%s\t%s\n" +
+                        "%s\t%s\n" +
+                        "\n"
+                ,"classLoadUniqueList",classLoadList.stream().collect(Collectors.toSet())
+                ,"classLoadSkipUniqueList",classLoadSkipList.stream().collect(Collectors.toSet())
+                ,"classExecuteUniqueList",classExecuteList.stream().collect(Collectors.toSet())
+                ,"classExecuteSkipUniqueList",classExecuteSkipList.stream().collect(Collectors.toSet())
+        );
+
+        System.err.printf(
+                "%s\t%s\n" +
+                        "%s\t%s\n" +
+                        "%s\t%s\n" +
+                        "%s\t%s\n" +
+                        "\n"
+                ,"classLoadUniqueListCnt",classLoadList.stream().collect(Collectors.toSet()).size()
+                ,"classLoadSkipUniqueListCnt",classLoadSkipList.stream().collect(Collectors.toSet()).size()
+                ,"classExecuteUniqueListCnt",classExecuteList.stream().collect(Collectors.toSet()).size()
+                ,"classExecuteSkipUniqueListCnt",classExecuteSkipList.stream().collect(Collectors.toSet()).size()
         );
 
         System.err.printf(
