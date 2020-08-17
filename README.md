@@ -429,3 +429,40 @@ jsoup-1.13.1.jar -> java.xml
 よくわからんが、このjardumpは依存関係の調査にもいいかんじに使えるのかもしれない
 
 jdepsコマンド便利
+
+
+同一クラス内の定数とメソッドを出力する例
+
+```
+$ java -jar jardump-4.2.0-SNAPSHOT-jar-with-dependencies.jar htmlcleaner-2.24.jar --method 2>/dev/null | grep 00000008
+htmlcleaner-2.24.jar	MMMMM	00000008	0001	org.htmlcleaner.CData	public	boolean	isBlank	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0002	org.htmlcleaner.CData	public	org.htmlcleaner.TagNode	getParent	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0003	org.htmlcleaner.CData	public	java.lang.String	toString	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0004	org.htmlcleaner.CData	public	java.lang.String	getContentWithoutStartAndEndTokens	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0005	org.htmlcleaner.CData	public	int	getRow	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0006	org.htmlcleaner.CData	public	int	getCol	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0007	org.htmlcleaner.CData	public	java.util.List<? extends org.htmlcleaner.BaseToken>	getSiblings	false	0			
+htmlcleaner-2.24.jar	MMMMM	00000008	0008	org.htmlcleaner.CData	public native	int	hashCode	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0009	org.htmlcleaner.CData	public	boolean	equals	false	1			java.lang.Object	arg0
+htmlcleaner-2.24.jar	MMMMM	00000008	0010	org.htmlcleaner.CData	public	void	setRow	false	1			int	arg0
+htmlcleaner-2.24.jar	MMMMM	00000008	0011	org.htmlcleaner.CData	public final native	void	notify	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0012	org.htmlcleaner.CData	public	java.lang.String	getContentWithStartAndEndTokens	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0013	org.htmlcleaner.CData	public	void	setCol	false	1			int	arg0
+htmlcleaner-2.24.jar	MMMMM	00000008	0014	org.htmlcleaner.CData	public	java.lang.String	getContent	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0015	org.htmlcleaner.CData	public final native	void	wait	false	1			long	arg0
+htmlcleaner-2.24.jar	MMMMM	00000008	0016	org.htmlcleaner.CData	public final	void	wait	false	2			long,int	arg0,arg1
+htmlcleaner-2.24.jar	MMMMM	00000008	0017	org.htmlcleaner.CData	public final	void	wait	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0018	org.htmlcleaner.CData	public	void	serialize	false	2			org.htmlcleaner.Serializer,java.io.Writer	arg0,arg1
+htmlcleaner-2.24.jar	MMMMM	00000008	0019	org.htmlcleaner.CData	public final native	java.lang.Class<?>	getClass	false	0				
+htmlcleaner-2.24.jar	MMMMM	00000008	0020	org.htmlcleaner.CData	public	void	setParent	false	1			org.htmlcleaner.TagNode	arg0
+htmlcleaner-2.24.jar	MMMMM	00000008	0021	org.htmlcleaner.CData	public final native	void	notifyAll	false	0				
+
+
+$ java -jar jardump-4.2.0-SNAPSHOT-jar-with-dependencies.jar htmlcleaner-2.24.jar --constant 2>/dev/null | grep 00000008
+htmlcleaner-2.24.jar	CCCCC	00000008	0001	org.htmlcleaner.CData	SAFE_BEGIN_CDATA_ALT
+htmlcleaner-2.24.jar	CCCCC	00000008	0002	org.htmlcleaner.CData	SAFE_END_CDATA_ALT
+htmlcleaner-2.24.jar	CCCCC	00000008	0003	org.htmlcleaner.CData	END_CDATA
+htmlcleaner-2.24.jar	CCCCC	00000008	0004	org.htmlcleaner.CData	BEGIN_CDATA
+htmlcleaner-2.24.jar	CCCCC	00000008	0005	org.htmlcleaner.CData	SAFE_BEGIN_CDATA
+htmlcleaner-2.24.jar	CCCCC	00000008	0006	org.htmlcleaner.CData	SAFE_END_CDATA
+```
