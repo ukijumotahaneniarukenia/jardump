@@ -1,11 +1,7 @@
 package app;
 
-import jdk.jfr.StackTrace;
-
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
-import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -29,7 +25,7 @@ public class App {
     //メソッドだけを持つクラス
     //定数とメソッドの両方を持つクラス
 
-    private static final String PROGRAM_VERSION = "4-1-0";
+    private static final String PROGRAM_VERSION = "X-X-X";
 
     private static final String F = "---";
     private static final String R = "###";
