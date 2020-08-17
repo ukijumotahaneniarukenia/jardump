@@ -466,3 +466,26 @@ htmlcleaner-2.24.jar	CCCCC	00000008	0004	org.htmlcleaner.CData	BEGIN_CDATA
 htmlcleaner-2.24.jar	CCCCC	00000008	0005	org.htmlcleaner.CData	SAFE_BEGIN_CDATA
 htmlcleaner-2.24.jar	CCCCC	00000008	0006	org.htmlcleaner.CData	SAFE_END_CDATA
 ```
+
+パッケージ名単位に紐づくクラス件数
+
+```
+$ java -jar jardump-4.2.0-SNAPSHOT-jar-with-dependencies.jar commons-lang3-3.11.jar --method 2>/dev/null | awk '{print $5}' | uniq | ruby -F'\.' -anle 'p $F[0..$F.size-2].join("-"),$F[$F.size-1]'|xargs -n2 | awk '{a[$1]=a[$1]","$2}END{for(e in a)print e,a[e]}'|sed 's/,/\t/'|ruby -F'\t' -anle 'p $F[0],$F[1].split(",").size'|xargs -n2|grep -v クラス名|sort -nrk2
+org-apache-commons-lang3  63
+org-apache-commons-lang3-time  60
+org-apache-commons-lang3-builder  45
+org-apache-commons-lang3-function  44
+org-apache-commons-lang3-concurrent  35
+org-apache-commons-lang3-text  21
+org-apache-commons-lang3-reflect  14
+org-apache-commons-lang3-text-translate  13
+org-apache-commons-lang3-mutable  9
+org-apache-commons-lang3-tuple  8
+org-apache-commons-lang3-exception  6
+org-apache-commons-lang3-event  4
+org-apache-commons-lang3-concurrent-locks  4
+org-apache-commons-lang3-compare  4
+org-apache-commons-lang3-stream  3
+org-apache-commons-lang3-math  3
+org-apache-commons-lang3-arch  3
+```
