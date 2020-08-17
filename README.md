@@ -44,3 +44,19 @@ java -jar jardump-X-X-X-SNAPSHOT.jar /home/aine/.m2/repository/xmlpull/xmlpull/1
 ```
 java -jar jardump-4.2.0-SNAPSHOT-jar-with-dependencies.jar scala-xml_2.13-1.3.0.jar --method 2>/dev/null | awk -v FS="\t" '$7=="java.lang.String"&&$6=="public"{print $5,$6,$7,$8}' OFS="\t"
 ```
+
+いけてるjarFileかどうか判定
+
+```
+$ java -jar jardump-4.2.0-SNAPSHOT-jar-with-dependencies.jar json-20200518.jar |& awk -v FS="\t" '$1 ~ /.*Cnt/{print $1,$2}' OFS="\t"
+jarFileListCnt	1
+jarFileClassCnt	26
+classLoadListCnt	26
+classLoadSkipListCnt	0
+classExecuteListCnt	26
+classExecuteSkipListCnt	0
+classLoadUniqueListCnt	26
+classLoadSkipUniqueListCnt	0
+classExecuteUniqueListCnt	26
+classExecuteSkipUniqueListCnt	0
+```
