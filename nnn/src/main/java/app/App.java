@@ -122,8 +122,8 @@ public class App {
             ++cnt;
             rt.put(entryClass.getValue()+F+CONST_SIGN+F+String.format(CLASS_GRP_DIGIT,grp)+F+String.format(CLASS_GRP_SEQ_DIGIT,cnt)
                     ,Arrays.asList(
-                            Optional.of(entryField.getValue().getName()).orElse(COLUMN_SEPARATOR) //クラス名
-                            ,Optional.of(entryField.getKey().getName()).orElse(COLUMN_SEPARATOR) //定数名
+                            entryField.getValue().getName() //クラス名
+                            ,entryField.getKey().getName() //定数名
                     )
             );
         }
@@ -136,7 +136,7 @@ public class App {
             ++cnt;
             rt.put(entryClass.getValue()+F+METHOD_SIGN+F+String.format(CLASS_GRP_DIGIT,grp)+F+String.format(CLASS_GRP_SEQ_DIGIT,cnt)
                     ,Arrays.asList(
-                            entryMethod.getValue().getName() //クラス名
+                            entryMethod.getValue(). getName() //クラス名
                             ,Modifier.toString(entryMethod.getKey().getModifiers()) //アクセス修飾子
                             ,entryMethod.getKey().getGenericReturnType().getTypeName() //戻り値の型
                             ,entryMethod.getKey().getName() //メソッド名
