@@ -1,7 +1,11 @@
 package app;
 
+import jdk.jfr.StackTrace;
+
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
@@ -43,7 +47,12 @@ public class App {
     private static final String OPTION_ARGUMENTS_GRADLE = "--gradle";
     private static final String OPTION_ARGUMENTS_KOTLIN = "--kotlin";
     private static final String OPTION_ARGUMENTS_SCALA = "--scala";
-    private static String DEFAULT_BASE_DIR = USER_HOME_DIR + "/.m2/repository";
+
+    private static final String REPOSITORY_BASE_DIR_MAVEN = "/.m2/repository";
+    private static final String REPOSITORY_BASE_DIR_GRADLE = "/.gradle/caches/modules-2/files-2.1";
+    private static final String REPOSITORY_BASE_DIR_KOTLIN = "/.sdkman/candidates/kotlin/current/lib";
+    private static final String REPOSITORY_BASE_DIR_SCALA = "/.sdkman/candidates/scala/current/lib";
+    private static String DEFAULT_BASE_DIR = USER_HOME_DIR + REPOSITORY_BASE_DIR_MAVEN;
 
     private static final String OPTION_ARGUMENTS_CONSTANT = "--constant";
     private static final String OPTION_ARGUMENTS_METHOD = "--method";
@@ -203,9 +212,52 @@ public class App {
 
         List<String> cmdLineArgs = Arrays.asList(args);
 
+//        // 複数件の件数チェック
 //        cmdLineArgs = Arrays.asList(
 //                USER_HOME_DIR +"/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar"
 //                ,USER_HOME_DIR + "/.m2/repository/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar"
+//                ,"--method"
+//        );
+//
+//        // 単一件の件数チェック
+//        cmdLineArgs = Arrays.asList(
+//                USER_HOME_DIR +"/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar"
+//                ,"--method"
+//        );
+//
+//        // 単一件の件数チェック
+//        cmdLineArgs = Arrays.asList(
+//                USER_HOME_DIR + "/.m2/repository/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar"
+//                ,"--method"
+//        );
+
+//        // 複数件の件数チェック
+//        cmdLineArgs = Arrays.asList(
+//                USER_HOME_DIR +"/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar"
+//                ,USER_HOME_DIR + "/.m2/repository/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar"
+//                ,"--constant"
+//        );
+
+//        // 単一件の件数チェック
+//        cmdLineArgs = Arrays.asList(
+//                USER_HOME_DIR +"/.m2/repository/xmlpull/xmlpull/1.1.3.1/xmlpull-1.1.3.1.jar"
+//                ,"--constant"
+//        );
+
+//        // 単一件の件数チェック
+//        cmdLineArgs = Arrays.asList(
+//                USER_HOME_DIR + "/.m2/repository/org/apache/commons/commons-lang3/3.11/commons-lang3-3.11.jar"
+//                ,"--constant"
+//        );
+
+        // 異常系もりもりチェック
+        cmdLineArgs = Arrays.asList(
+                USER_HOME_DIR +"/scala-xml_2.13-1.3.0.jar"
+                ,"--method"
+        );
+
+//        cmdLineArgs = Arrays.asList(
+//                USER_HOME_DIR +"/scala-xml_2.13-1.3.0.jar"
 //                ,"--constant"
 //        );
 
@@ -229,17 +281,17 @@ public class App {
             //コマンドライン引数にjarファイルを１つも含まない場合
             for(String arg : cmdLineArgs){
                 switch (arg){
-                    case OPTION_ARGUMENTS_GRADLE:
-                        DEFAULT_BASE_DIR = USER_HOME_DIR + "/.gradle/caches/modules-2/files-2.1";
-                        break;
                     case OPTION_ARGUMENTS_MAVEN :
-                        DEFAULT_BASE_DIR = USER_HOME_DIR + "/.m2/repository";
+                        DEFAULT_BASE_DIR = USER_HOME_DIR + REPOSITORY_BASE_DIR_MAVEN;
+                        break;
+                    case OPTION_ARGUMENTS_GRADLE:
+                        DEFAULT_BASE_DIR = USER_HOME_DIR + REPOSITORY_BASE_DIR_GRADLE;
                         break;
                     case OPTION_ARGUMENTS_KOTLIN:
-                        DEFAULT_BASE_DIR = USER_HOME_DIR + "/.sdkman/candidates/kotlin/current/lib";
+                        DEFAULT_BASE_DIR = USER_HOME_DIR + REPOSITORY_BASE_DIR_KOTLIN;
                         break;
                     case OPTION_ARGUMENTS_SCALA:
-                        DEFAULT_BASE_DIR = USER_HOME_DIR + "/.sdkman/candidates/scala/current/lib";
+                        DEFAULT_BASE_DIR = USER_HOME_DIR + REPOSITORY_BASE_DIR_SCALA;
                         break;
                     default:
                         Usage();
@@ -260,7 +312,8 @@ public class App {
         int jarFileListCnt = jarFileList.size();
         int jarFileClassCnt = 0;
 
-        List<Map<Class<?>,String>> loadClassJarFileNameMapList = new LinkedList<>();
+        // サマリ情報格納時、jarFile単位で管理したいので、ネスト浅い箇所にjarFileを持つように定義
+        Map<String,List<Map<Class<?>,String>>> classLoadedDoneCanExecuteClassListMap = new LinkedHashMap<>();
 
         List<String> classLoadList = new LinkedList<>();
         List<String> classLoadSkipList = new LinkedList<>();
@@ -272,115 +325,206 @@ public class App {
         Map<String,List<String>> classExecuteDoneResult = new LinkedHashMap<>();
         Map<String,List<String>> classExecuteSkipResult = new LinkedHashMap<>();
 
+        Map<String,Map<String,Set<String>>> classLoadSkipCauseSummaryInfo = new LinkedHashMap<>();
+        Map<String,Map<String,Set<String>>> classExecuteSkipCauseSummaryInfo = new LinkedHashMap<>();
+
         for (File f : jarFileList) {
 
-            JarFile jarFile = new JarFile(f.getPath());
+            String jarFileName = f.getPath();
+
+            JarFile jarFile = new JarFile(jarFileName);
+
             List<JarEntry> jarEntries = Collections.list(jarFile.entries());
 
+            Map<String,Set<String>> classLoadSkipCauseDetailInfo = new LinkedHashMap<>();
+
+            List<Map<Class<?>,String>> classLoadedDoneCanExecuteClassList = new LinkedList<>();
+
             for (JarEntry jarEntry : jarEntries) {
+
                 if (jarEntry.getName().endsWith(".class")) {
+
                     jarFileClassCnt++;
-                    String className = jarEntry.getName().replace('/', '.').replaceAll(".class$", "");
+
+                    String tryToLoadClassName = jarEntry.getName().replace('/', '.').replaceAll(".class$", "");
+
                     try {
 
-                        Class<?> loadClass = classLoader.loadClass(className);
-                        Map<Class<?>,String> loadClassJarFileNameMap = new LinkedHashMap(){{
-                            put(loadClass,f.getPath());
-                        }};
-                        loadClassJarFileNameMapList.add(loadClassJarFileNameMap);
+                        Class<?> loadClass = classLoader.loadClass(tryToLoadClassName);
 
-                        classLoadList.add(className);
+                        // 実行時にjarFileが必要なので、持ち回っている
+                        Map<Class<?>,String> classLoadedDoneCanExecuteClassMap = new LinkedHashMap(){{
+                            put(loadClass ,jarFileName);
+                        }};
+
+                        classLoadedDoneCanExecuteClassList.add(classLoadedDoneCanExecuteClassMap);
+
+                        classLoadList.add(tryToLoadClassName);
 
                     }catch (Throwable e){
-                        //クラスパスロード時のハンドリング
-                        classLoadSkipList.add(className);
+
+                        // 依存関係が足りなかったクラス名ではなくて、ロード使用してできなかったクラス名を格納
+                        classLoadSkipList.add(tryToLoadClassName);
+
+                        String className = e.getMessage().replace('/','.');
+                        String exceptionClassName = e.getClass().getName();
+
+                        if(classLoadSkipCauseDetailInfo.containsKey(exceptionClassName)){
+
+                            classLoadSkipCauseDetailInfo.get(exceptionClassName).add(className);
+
+                        }else{
+
+                            classLoadSkipCauseDetailInfo.put(exceptionClassName,new LinkedHashSet<>(Arrays.asList(className)));
+
+                        }
                     }
                 }
             }
+
+            classLoadedDoneCanExecuteClassListMap.put(f.getPath(),classLoadedDoneCanExecuteClassList);
+            classLoadSkipCauseSummaryInfo.put(f.getPath(),classLoadSkipCauseDetailInfo);
             classLoadDoneResult.put(f.getPath(),classLoadList);
             classLoadSkipResult.put(f.getPath(),classLoadSkipList);
         }
 
-        int cnt = loadClassJarFileNameMapList.size();
-        int grp = 0;
-        List<List<String>> classInfoList = new LinkedList<>();
+        Map<String,Set<String>> classExecuteCauseDetailInfo = new LinkedHashMap<>();
+
+        List<List<String>> classInfoList;
         List<List<String>> classConstantInfoList;
         List<List<String>> classMethodInfoList;
 
-        for(int i=0;i<cnt;i++){
+        // 実行時はロードできたクラスファイル件数分で実施
+        for(Map.Entry<String,List<Map<Class<?>,String>>> entry : classLoadedDoneCanExecuteClassListMap.entrySet()){
 
-            try{
+            String jarFile = entry.getKey();
 
-                grp++;
+            int grp = 0;
 
-                if(i==0){
+            for(Map<Class<?>,String> classMetaInfo :entry.getValue()){
+
+                try{
+
+                    grp++;
+
+                    if(grp == 1){
+                        // ヘッダ行の出力
+
+                        if(DEFAULT_OUTPUT == OPTION_ARGUMENTS_CONSTANT){
+
+                            System.out.println(OUTPUT_HEADER_CONSTANT_COLUMN_NAME_LIST.stream().collect(Collectors.joining(COLUMN_SEPARATOR)));
+
+                        }else if(DEFAULT_OUTPUT == OPTION_ARGUMENTS_METHOD){
+
+                            System.out.println(OUTPUT_HEADER_METHOD_COLUMN_NAME_LIST.stream().collect(Collectors.joining(COLUMN_SEPARATOR)));
+
+                        }else{
+
+                            Usage();
+
+                        }
+                    }
+
+                    classInfoList = getClassInfo(grp,classMetaInfo);
 
                     if(DEFAULT_OUTPUT == OPTION_ARGUMENTS_CONSTANT){
 
-                        System.out.println(OUTPUT_HEADER_CONSTANT_COLUMN_NAME_LIST.stream().collect(Collectors.joining(COLUMN_SEPARATOR)));
+                        classConstantInfoList = classInfoList.stream().filter(e->e.size()==OUTPUT_HEADER_CONSTANT_COLUMN_NAME_LIST.size()).collect(toList());
+                        classConstantInfoList.stream().forEach(e-> System.out.println(e.stream().collect(Collectors.joining(COLUMN_SEPARATOR))));
 
                     }else if(DEFAULT_OUTPUT == OPTION_ARGUMENTS_METHOD){
 
-                        System.out.println(OUTPUT_HEADER_METHOD_COLUMN_NAME_LIST.stream().collect(Collectors.joining(COLUMN_SEPARATOR)));
+                        classMethodInfoList = classInfoList.stream().filter(e->e.size()==OUTPUT_HEADER_METHOD_COLUMN_NAME_LIST.size()).collect(toList());
+                        classMethodInfoList.stream().forEach(e-> System.out.println(e.stream().collect(Collectors.joining(COLUMN_SEPARATOR))));
 
                     }else{
 
                         Usage();
 
                     }
+
+                    classExecuteList.addAll(classInfoList.stream().collect(Collectors.groupingBy(list->list.get(4))).keySet());
+
+                    if(classExecuteDoneResult.containsKey(jarFile)){
+
+                        classExecuteDoneResult.get(jarFile).addAll(classInfoList.stream().collect(Collectors.groupingBy(list->list.get(4))).keySet());
+
+                    }else{
+
+                        classExecuteDoneResult.put(jarFile, new ArrayList<>(classInfoList.stream().collect(Collectors.groupingBy(list -> list.get(4))).keySet()));
+
+                    }
+
+                }catch (Throwable e){
+
+                    String className = e.getMessage().replace('/','.');
+                    String exceptionClassName = e.getClass().getName();
+
+                    classExecuteSkipList.add(className);
+
+                    if(classExecuteCauseDetailInfo.containsKey(exceptionClassName)){
+
+                        classExecuteCauseDetailInfo.get(exceptionClassName).add(className);
+
+                    }else{
+
+                        classExecuteCauseDetailInfo.put(exceptionClassName,new LinkedHashSet<>(Arrays.asList(className)));
+
+                    }
                 }
-
-                classInfoList = getClassInfo(grp,loadClassJarFileNameMapList.get(i));
-
-                if(DEFAULT_OUTPUT == OPTION_ARGUMENTS_CONSTANT){
-
-                    classConstantInfoList = classInfoList.stream().filter(e->e.size()==OUTPUT_HEADER_CONSTANT_COLUMN_NAME_LIST.size()).collect(toList());
-                    classConstantInfoList.stream().forEach(e-> System.out.println(e.stream().collect(Collectors.joining(COLUMN_SEPARATOR))));
-
-                }else if(DEFAULT_OUTPUT == OPTION_ARGUMENTS_METHOD){
-
-                    classMethodInfoList = classInfoList.stream().filter(e->e.size()==OUTPUT_HEADER_METHOD_COLUMN_NAME_LIST.size()).collect(toList());
-                    classMethodInfoList.stream().forEach(e-> System.out.println(e.stream().collect(Collectors.joining(COLUMN_SEPARATOR))));
-
-                }else{
-
-                    Usage();
-
-                }
-
-                classExecuteList.addAll(classInfoList.stream().map(r->r.get(0)).collect(Collectors.toList()));
-
-            }catch (Throwable e){
-                //実行時のハンドリング
-                classExecuteSkipList.addAll(classInfoList.stream().filter(r->r.contains("クラス名")).map(r->r.get(6)).collect(Collectors.toSet()));
             }
-            classExecuteDoneResult.put(classInfoList.stream().map(r->r.get(0)).limit(1).collect(Collectors.joining()), classExecuteList);
-            classExecuteSkipResult.put(classInfoList.stream().map(r->r.get(0)).limit(1).collect(Collectors.joining()), classExecuteSkipList);
+
+            classExecuteSkipCauseSummaryInfo.put(jarFile,classExecuteCauseDetailInfo);
+
         }
 
         System.err.printf(
                 "\n" +
                 "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "\n"
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "\n"
                 ,"jarFileListCnt",jarFileListCnt
                 ,"jarFileClassCnt",jarFileClassCnt
-                ,"jarFileClassLoadDoneCnt",classLoadList.size()
-                ,"jarFileClassLoadSkipCnt",classLoadSkipList.size()
-                ,"jarFileClassExecuteDoneCnt",classExecuteList.size()
-                ,"jarFileClassExecuteSkipCnt",classExecuteSkipList.size()
+                ,"classLoadListCnt",classLoadList.size()
+                ,"classLoadSkipListCnt",classLoadSkipList.size()
+                ,"classExecuteListCnt",classExecuteList.size()
+                ,"classExecuteSkipListCnt",classExecuteSkipList.size()
         );
 
         System.err.printf(
                 "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "\n"
-                ,"jarFileClassLoadSkipList",classLoadSkipList
-                ,"jarFileClassExecuteSkipList",classExecuteSkipList
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "\n"
+                ,"classLoadList",classLoadList
+                ,"classLoadSkipList",classLoadSkipList
+                ,"classExecuteList",classExecuteList
+                ,"classExecuteSkipList",classExecuteSkipList
+        );
+
+        System.err.printf(
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "\n"
+                ,"classLoadDoneResult",classLoadDoneResult
+                ,"classLoadSkipResult",classLoadSkipResult
+                ,"classExecuteDoneResult",classExecuteDoneResult
+                ,"classExecuteSkipResult",classExecuteSkipResult
+        );
+
+        System.err.printf(
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "\n"
+                ,"classLoadSkipCauseSummaryInfo",classLoadSkipCauseSummaryInfo
+                ,"classExecuteSkipCauseSummaryInfo",classExecuteSkipCauseSummaryInfo
         );
     }
 }
