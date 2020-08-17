@@ -5,8 +5,8 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>app</groupId>
-  <artifactId>jardump</artifactId>
-  <version>4-0-0-SNAPSHOT</version>
+  <artifactId>nnn</artifactId>
+  <version>1.0-SNAPSHOT</version>
 
   <name>nnn</name>
   <!-- FIXME change it to the project's website -->
@@ -69,21 +69,6 @@
           <artifactId>maven-project-info-reports-plugin</artifactId>
           <version>3.0.0</version>
         </plugin>
-        <plugin>
-          <groupId>org.apache.maven.plugins</groupId>
-          <artifactId>maven-jar-plugin</artifactId>
-          <configuration>
-            <archive>
-              <manifest>
-                <mainClass>app.App</mainClass>
-                <!-- Class-Path属性の自動設定 -->
-                <addClasspath>true</addClasspath>
-                <!-- Class-Path属性で"lib/"などprefixを付けたい時に指定 -->
-                <!--                <classpathPrefix>lib</classpathPrefix>-->
-              </manifest>
-            </archive>
-          </configuration>
-        </plugin>
       </plugins>
     </pluginManagement>
     <plugins>
@@ -95,17 +80,26 @@
           <target>11</target>
         </configuration>
       </plugin>
+
+      <!--      fatjarを作成するためのプラグイン　ここから-->
       <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-assembly-plugin</artifactId>
-        <version>2.3</version>
+        <version>3.1.0</version>
         <configuration>
-          <descriptors>
-            <descriptor>src/assemble/bin.xml</descriptor>
-          </descriptors>
+          <descriptorRefs>
+            <descriptorRef>jar-with-dependencies</descriptorRef>
+          </descriptorRefs>
+          <archive>
+            <manifest>
+              <addClasspath>true</addClasspath>
+              <mainClass>app.App</mainClass>
+            </manifest>
+          </archive>
         </configuration>
         <executions>
           <execution>
-            <id>make-assembly</id>
+            <id>assemble-all</id>
             <phase>package</phase>
             <goals>
               <goal>single</goal>
@@ -113,6 +107,7 @@
           </execution>
         </executions>
       </plugin>
+      <!--      fatjarを作成するためのプラグイン　ここまで-->
     </plugins>
   </build>
 </project>
