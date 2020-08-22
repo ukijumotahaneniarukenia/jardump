@@ -526,3 +526,51 @@ classLoadSkipCauseSummaryInfo	{/home/aine/.m2/repository/org/springframework/spr
 classExecuteSkipCauseSummaryInfo	{/home/aine/.m2/repository/org/springframework/spring-webmvc/5.2.8.RELEASE/spring-webmvc-5.2.8.RELEASE.jar={java.lang.NoClassDefFoundError=[org.springframework.format.FormatterRegistry, org.springframework.core.Ordered, org.springframework.http.MediaType, org.springframework.http.HttpStatus, org.springframework.core.task.AsyncTaskExecutor, org.springframework.http.CacheControl, org.springframework.web.context.request.WebRequestInterceptor, org.springframework.util.PathMatcher, org.springframework.beans.factory.BeanInitializationException, org.springframework.cache.Cache, org.springframework.beans.factory.config.BeanDefinition, javax.servlet.http.HttpServletRequest, org.springframework.context.MessageSource, org.springframework.web.util.UrlPathHelper, javax.servlet.jsp.PageContext, javax.servlet.ServletRequest, org.springframework.context.MessageSourceResolvable, org.springframework.core.ParameterizedTypeReference, org.springframework.util.MultiValueMap, org.springframework.http.HttpMethod, org.springframework.core.io.Resource, org.springframework.http.HttpHeaders, javax.servlet.ServletException, org.springframework.http.server.PathContainer, javax.servlet.http.Cookie, org.springframework.web.util.UriBuilder, [Lorg.springframework.http.MediaType;, org.springframework.ui.ExtendedModelMap, org.springframework.web.util.UriComponentsBuilder, org.springframework.web.context.request.WebRequest, org.springframework.http.HttpInputMessage, org.springframework.core.ResolvableType, org.springframework.web.HttpRequestMethodNotSupportedException, org.springframework.core.MethodParameter, org.springframework.http.HttpOutputMessage, [Lorg.springframework.web.bind.annotation.RequestMethod;, org.springframework.web.method.HandlerMethod, org.springframework.http.InvalidMediaTypeException, org.springframework.web.HttpMediaTypeException, org.springframework.context.i18n.LocaleContext, javax.servlet.jsp.JspTagException, javax.servlet.jsp.JspException, javax.servlet.jsp.JspWriter, javax.servlet.ServletResponse, org.springframework.beans.factory.InitializingBean, org.springframework.core.io.ByteArrayResource, org.springframework.context.ApplicationListener, org.springframework.web.bind.ServletRequestBindingException, freemarker.template.Configuration, javax.el.ELResolver, groovy.text.markup.MarkupTemplateEngine, org.springframework.context.ApplicationContext, kotlin.jvm.functions.Function1], java.lang.TypeNotPresentException=[Type org.springframework.http.converter.HttpMessageConverter not present, Type org.springframework.http.HttpMethod not present, Type org.springframework.core.io.Resource not present, Type org.springframework.http.MediaType not present]}}
 ```
 
+
+json出力にしよとおもう
+
+こんな感じ
+
+```
+$ echo '{"/home/aine/.m2/repository/org/springframework/spring-webmvc/5.2.8.RELEASE/spring-webmvc-5.2.8.RELEASE.jar":[{"java.lang.NoClassDefFoundError":["org.springframework.beans.factory.xml.NamespaceHandlerSupport", "org.springframework.beans.factory.FactoryBean"]},{"java.unko.MoriMoriError":["org.springframework.validation.Validator", "org.springframework.context.ApplicationContextAware"]}]}' | jq
+{
+  "/home/aine/.m2/repository/org/springframework/spring-webmvc/5.2.8.RELEASE/spring-webmvc-5.2.8.RELEASE.jar": [
+    {
+      "java.lang.NoClassDefFoundError": [
+        "org.springframework.beans.factory.xml.NamespaceHandlerSupport",
+        "org.springframework.beans.factory.FactoryBean"
+      ]
+    },
+    {
+      "java.unko.MoriMoriError": [
+        "org.springframework.validation.Validator",
+        "org.springframework.context.ApplicationContextAware"
+      ]
+    }
+  ]
+}
+```
+
+スキーマ定義
+
+```
+{
+  "type": "object",
+  "properties": {
+    "jarFileName": {
+      "type": "string"
+    },
+    "classLoadSkipCauseDetail": {
+      "type": "object",
+      "properties": {
+        "errorName": {
+          "type": "string"
+        },
+        "errorClassName": {
+          "type": "array"
+        }
+      }
+    }
+  }
+}
+```
