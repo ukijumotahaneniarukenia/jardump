@@ -1,5 +1,7 @@
 package app;
 
+import com.google.gson.Gson;
+
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -204,7 +206,7 @@ public class App {
     }
     public static void main(String... args) throws IOException {
 
-        List<String> cmdLineArgs = Arrays.asList(args);
+        List<String> cmdLineArgs = Arrays.asList("/home/aine/.m2/repository/org/springframework/spring-webmvc/5.2.8.RELEASE/spring-webmvc-5.2.8.RELEASE.jar");
 
         Set<File> jarFileList = new LinkedHashSet<>();
 
@@ -454,10 +456,10 @@ public class App {
 
         System.err.printf(
                 "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "\n"
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "\n"
                 ,"classLoadUniqueList",classLoadList.stream().collect(Collectors.toSet())
                 ,"classLoadSkipUniqueList",classLoadSkipList.stream().collect(Collectors.toSet())
                 ,"classExecuteUniqueList",classExecuteList.stream().collect(Collectors.toSet())
@@ -466,10 +468,10 @@ public class App {
 
         System.err.printf(
                 "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "%s\t%s\n" +
-                        "\n"
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "%s\t%s\n" +
+                "\n"
                 ,"classLoadUniqueListCnt",classLoadList.stream().collect(Collectors.toSet()).size()
                 ,"classLoadSkipUniqueListCnt",classLoadSkipList.stream().collect(Collectors.toSet()).size()
                 ,"classExecuteUniqueListCnt",classExecuteList.stream().collect(Collectors.toSet()).size()
@@ -492,8 +494,85 @@ public class App {
                 "%s\t%s\n" +
                 "%s\t%s\n" +
                 "\n"
-                ,"classLoadSkipCauseSummaryInfo",classLoadSkipCauseSummaryInfo
-                ,"classExecuteSkipCauseSummaryInfo",classExecuteSkipCauseSummaryInfo
+                ,"classLoadSkipCauseSummaryInfo",outputClassLoadSkipCauseSummaryInfoJson(classLoadSkipCauseSummaryInfo)
+                ,"classExecuteSkipCauseSummaryInfo",outputClassExecuteSkipCauseSummaryInfoJson(classExecuteSkipCauseSummaryInfo)
         );
+    }
+
+    private static String outputClassLoadSkipCauseSummaryInfoJson(Map<String,Map<String,Set<String>>> classLoadSkipCauseSummaryInfo){
+
+        Gson gson = new Gson();
+
+        String json = null;
+
+        ClassLoadSkipCauseSummary classLoadSkipCauseSummary = new ClassLoadSkipCauseSummary();
+
+        for(Map.Entry<String,Map<String,Set<String>>> entrySummary : classLoadSkipCauseSummaryInfo.entrySet()){
+
+            String jarFileName = entrySummary.getKey();
+
+            classLoadSkipCauseSummary.setJarFileName(jarFileName);
+
+            for(Map.Entry<String,Set<String>> entryDetail : entrySummary.getValue().entrySet()){
+
+                String errorName = entryDetail.getKey();
+
+                ClassLoadSkipCauseDetail classLoadSkipCauseDetail = new ClassLoadSkipCauseDetail();
+
+                List<Object> errorClassList = new LinkedList(){{
+                    addAll(entryDetail.getValue());
+                }};
+
+                classLoadSkipCauseDetail.setErrorName(errorName);
+
+                classLoadSkipCauseDetail.setErrorClassName(errorClassList);
+
+                classLoadSkipCauseSummary.setClassLoadSkipCauseDetail(classLoadSkipCauseDetail);
+
+            }
+
+            json = gson.toJson(classLoadSkipCauseSummary);
+        }
+
+        return json;
+
+    }
+
+    private static String outputClassExecuteSkipCauseSummaryInfoJson(Map<String,Map<String,Set<String>>> classExecuteSkipCauseSummaryInfo){
+
+        Gson gson = new Gson();
+
+        String json = null;
+
+        ClassExecuteSkipCauseSummary classExecuteSkipCauseSummary = new ClassExecuteSkipCauseSummary();
+
+        for(Map.Entry<String,Map<String,Set<String>>> entrySummary : classExecuteSkipCauseSummaryInfo.entrySet()){
+
+            String jarFileName = entrySummary.getKey();
+
+            classExecuteSkipCauseSummary.setJarFileName(jarFileName);
+
+            for(Map.Entry<String,Set<String>> entryDetail : entrySummary.getValue().entrySet()){
+
+                String errorName = entryDetail.getKey();
+
+                ClassExecuteSkipCauseDetail classExecuteSkipCauseDetail = new ClassExecuteSkipCauseDetail();
+
+                List<Object> errorClassList = new LinkedList(){{
+                    addAll(entryDetail.getValue());
+                }};
+
+                classExecuteSkipCauseDetail.setErrorName(errorName);
+
+                classExecuteSkipCauseDetail.setErrorClassName(errorClassList);
+
+                classExecuteSkipCauseSummary.setClassExecuteSkipCauseDetail(classExecuteSkipCauseDetail);
+
+            }
+
+            json = gson.toJson(classExecuteSkipCauseSummary);
+        }
+
+        return json;
     }
 }
