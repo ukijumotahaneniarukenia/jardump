@@ -560,7 +560,7 @@ $ echo '{"/home/aine/.m2/repository/org/springframework/spring-webmvc/5.2.8.RELE
     "jarFileName": {
       "type": "string"
     },
-    "ClassLoadSkipCauseDetail": {
+    "classLoadSkipCauseDetail": {
       "type": "object",
       "properties": {
         "errorName": {
