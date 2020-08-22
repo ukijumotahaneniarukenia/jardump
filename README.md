@@ -550,3 +550,27 @@ $ echo '{"/home/aine/.m2/repository/org/springframework/spring-webmvc/5.2.8.RELE
   ]
 }
 ```
+
+スキーマ定義
+
+```
+{
+  "type": "object",
+  "properties": {
+    "jarFileName": {
+      "type": "string"
+    },
+    "ClassLoadSkipCauseDetail": {
+      "type": "object",
+      "properties": {
+        "errorName": {
+          "type": "string"
+        },
+        "errorClassName": {
+          "type": "array"
+        }
+      }
+    }
+  }
+}
+```
