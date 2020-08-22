@@ -574,3 +574,27 @@ $ echo '{"/home/aine/.m2/repository/org/springframework/spring-webmvc/5.2.8.RELE
   }
 }
 ```
+
+
+
+これでmeldとかで差分見ると、ほんのちょっとだけspring関連の依存関係が解決できていないクラスファイルがあった
+
+```
+
+通した場合
+
+$ java -jar jardump-4.3.0-SNAPSHOT-jar-with-dependencies.jar /home/aine/.m2/repository/org/springframework/spring-webmvc/5.2.8.RELEASE/spring-webmvc-5.2.8.RELEASE.jar 2>stderr.txt 1>/dev/null
+
+
+
+$ cat stderr.txt  | grep classLoadSkipCauseSummaryInfo | awk -v FS="\t" '{print $2}' | jq --stream -c '(.[0]|map(if type == "number" then tostring else . end)|join("-")),.[1]'|xargs -n2 | awk '$0=$2' | sort
+
+通さない場合
+
+$ java -cp "$(find $HOME/.m2/repository -type f | grep 'jar$' | xargs | tr ' ' ':'):jardump-4.3.0-SNAPSHOT-jar-with-dependencies.jar" app.App  /home/aine/.m2/repository/org/springframework/spring-webmvc/5.2.8.RELEASE/spring-webmvc-5.2.8.RELEASE.jar  2>stderr.txt 1>/dev/null
+
+
+$ cat stderr.txt  | grep classLoadSkipCauseSummaryInfo | awk -v FS="\t" '{print $2}' | jq --stream -c '(.[0]|map(if type == "number" then tostring else . end)|join("-")),.[1]'|xargs -n2 | awk '$0=$2' | sort
+
+```
+
